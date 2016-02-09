@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 {% load staticfiles %}
 <link rel="stylesheet" type="text/css" href="{% static "css/styles.css" %}">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 
 <body>
@@ -16,46 +16,132 @@
 				<div class="col-xs-6" style="height:100%;">
 					<div class="upperForm">
 						<div class="upperFormTitle">
-							Select Cloud Configuration
+							<h2><strong>Select Cloud Configuration</strong><h2>
 						</div>
 						
-						{% for hypervisor in hypervisors %}
-						<div class="radio" style="margin-left: 25%;">
-							<label>
-    							<input type="radio" name="optionsRadios" id="optionsRadios1" value="{{ hypervisor }}" checked>
-    							{% if hypervisor == "VMWare vSphere" %} 
-    								<img src="{% static "images/vsphere.jpg" %}" height="60" width="140" style="margin-bottom:5%;">
-    							{% elif hypervisor == "Xen Server" %}
-    								<img src="{% static "images/xen.png" %}" height="60" width="120" style="margin-bottom:5%;">
-    							{% elif hypervisor == "Microsoft Hyper-V" %}
-    								<img src="{% static "images/hyperv.png" %}" height="60" width="120" style="margin-bottom:5%;">
-    							{% endif %}
-    						</label>
-    					</div>
-								<!--option value="{{ hypervisor }}">{{ hypervisor }} {% if hypervisor == "VMWare vSphere" %} <img src="{% static "images/vsphere.jpg" %}"> {% endif %}</option-->
-						{% endfor %}
-						
-
-						<br />
-
-						<select class="form-control">
-							{% for cloudStack in cloudStacks %}
-								<option value="{{ cloudStack }}">{{ cloudStack }}</option>
+						<div class="forms">
+							<div style="margin-left:3%; margin-bottom:2%;">
+								<h4><small>Select a hypervisor:</small></h4>
+							</div>
+							{% for hypervisor in hypervisors %}
+							<!--div class="radio" style="margin-left: 25%;"-->
+								<label class="checkbox-inline">
+	    							<input type="radio" name="hypervisorRadios" id="optionsRadios1" value="{{ hypervisor }}" checked>
+	    							{% if hypervisor == "VMWare vSphere" %} 
+	    								<img src="{% static "images/vsphere.jpg" %}" height="60" width="140" style="margin-bottom:5%;">
+	    							{% elif hypervisor == "Xen Server" %}
+	    								<img src="{% static "images/xen.png" %}" height="60" width="120" style="margin-bottom:5%;">
+	    							{% elif hypervisor == "Microsoft Hyper-V" %}
+	    								<img src="{% static "images/hyperv.png" %}" height="60" width="120" style="margin-bottom:5%;">
+	    							{% endif %}
+	    						</label>
+	    					<!--/div-->
+									<!--option value="{{ hypervisor }}">{{ hypervisor }} {% if hypervisor == "VMWare vSphere" %} <img src="{% static "images/vsphere.jpg" %}"> {% endif %}</option-->
 							{% endfor %}
-						</select>
+							
+
+							<br />
+							<div style="margin-left:3%; margin-bottom:2%; margin-top:4%;">
+								<h4><small>Select a Cloud Stack:</small></h4>
+							</div>
+							{% for cloudStack in cloudStacks %}
+								<!--div class="radio" style="margin-left: 25%;"-->
+									<label class="checkbox-inline">
+		    							<input type="radio" name="cloudstackRadios" id="optionsRadios2" value="{{ cloudStack }}" checked>
+		    							{% if cloudStack == "Apache CloudStack" %} 
+		    								<img src="{% static "images/apachecloudstack.png" %}" height="70" width="120" style="margin-bottom:5%;">
+		    							{% elif cloudStack == "Cloud Foundry" %}
+		    								<img src="{% static "images/cloudfoundry.png" %}" height="80" width="120" style="margin-bottom:5%;">
+		    							{% elif cloudStack == "RedHat OpenShift" %}
+		    								<img src="{% static "images/openshift.png" %}" height="60" width="120" style="margin-bottom:5%;">
+		    							{% endif %}
+		    						</label>
+	    						<!--/div-->
+							{% endfor %}
+						</div>
 					</div>
 					<div class="lowerForm">
 						<div class="lowerFormTitle">
-							Select DHCP Configuration
+							<h2><strong>Select DHCP Configuration</strong></h2>
 						</div>
-						<label for="Gateway">Gateway</label>
-	    				<input type="text" class="form-control" id="gateway" placeholder="Gateway">
-	    				<button type="button" class="btn btn-primary btn-lg">Deploy</button>
+						<div class="forms2">
+							<label for="Gateway">Gateway</label>
+		    				<input type="text" class="form-control" id="gateway" placeholder="Gateway">
+		    				<br />
+		    				<button type="button" class="btn btn-primary btn-lg">Configure</button>
+		    			</div>
 					</div>
 				</div>
-				<div class="col-xs-6" style="height:100%; border-left: 5px thick black;">
+				<div class="col-xs-6" style="height:100%;">
 					<div class="DHCP">
-							DHCP Configuration File
+							<h2><strong>DHCP Configuration File</strong></h2>
+					</div>
+					<div class="configFile">
+						<pre class="configCode">
+#
+# Sample configuration file for ISC dhcpd for Debian
+#
+# Attention: If /etc/ltsp/dhcpd.conf exists, that will be used as
+# configuration file instead of this file.
+#
+#
+
+# The ddns-updates-style parameter controls whether or not the server will
+# attempt to do a DNS update when a lease is confirmed. We default to the
+# behavior of the version 2 packages ('none', since DHCP v2 didn't
+# have support for DDNS.)
+ddns-update-style none;
+
+# option definitions common to all supported networks...
+option domain-name "example.org";
+option domain-name-servers ns1.example.org, ns2.example.org;
+
+default-lease-time 600;
+max-lease-time 7200;
+
+# If this DHCP server is the official DHCP server for the local
+# network, the authoritative directive should be uncommented.
+#authoritative;
+
+# Use this to send dhcp log messages to a different log file (you also
+# have to hack syslog.conf to complete the redirection).
+log-facility local7;
+
+# No service will be given on this subnet, but declaring it helps the 
+# DHCP server to understand the network topology.
+
+#subnet 10.152.187.0 netmask 255.255.255.0 {
+#}
+
+# This is a very basic subnet declaration.
+
+#subnet 10.254.239.0 netmask 255.255.255.224 {
+#  range 10.254.239.10 10.254.239.20;
+#  option routers rtr-239-0-1.example.org, rtr-239-0-2.example.org;
+#}
+
+# This declaration allows BOOTP clients to get dynamic addresses,
+# which we don't really recommend.
+
+#subnet 10.254.239.32 netmask 255.255.255.224 {
+#  range dynamic-bootp 10.254.239.40 10.254.239.60;
+#  option broadcast-address 10.254.239.31;
+#  option routers rtr-239-32-1.example.org;
+#}
+
+# A slightly different configuration for an internal subnet.
+#subnet 10.5.5.0 netmask 255.255.255.224 {
+#  range 10.5.5.26 10.5.5.30;
+#  option domain-name-servers ns1.internal.example.org;
+#  option domain-name "internal.example.org";
+#  option routers 10.5.5.1;
+#  option broadcast-address 10.5.5.31;
+#  default-lease-time 600;
+#  max-lease-time 7200;
+#}
+
+# Hosts which require special configuration options can be listed in
+						</pre>
 					</div>
 				</div>
 			</div>
