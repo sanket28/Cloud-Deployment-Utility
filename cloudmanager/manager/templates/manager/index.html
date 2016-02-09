@@ -1,4 +1,67 @@
-<select>
-{% for hypervisor in hypervisors %}
-	<option value="{{ hypervisor }}">{{ hypervisor }}</option>
-{% endfor %}
+<!DOCTYPE html>
+<html>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+{% load staticfiles %}
+<link rel="stylesheet" type="text/css" href="{% static "css/styles.css" %}">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+<body>
+	<!--div class="container"-->
+		<div class="header">
+			<div style="margin-top:1%; margin-left:0.5%;">Cloud Deployment Utility</div>
+		</div>
+		<div class="content">
+			<div class="row">
+				<div class="col-xs-6" style="height:100%;">
+					<div class="upperForm">
+						<div class="upperFormTitle">
+							Select Cloud Configuration
+						</div>
+						
+						{% for hypervisor in hypervisors %}
+						<div class="radio" style="margin-left: 25%;">
+							<label>
+    							<input type="radio" name="optionsRadios" id="optionsRadios1" value="{{ hypervisor }}" checked>
+    							{% if hypervisor == "VMWare vSphere" %} 
+    								<img src="{% static "images/vsphere.jpg" %}" height="60" width="140" style="margin-bottom:5%;">
+    							{% elif hypervisor == "Xen Server" %}
+    								<img src="{% static "images/xen.png" %}" height="60" width="120" style="margin-bottom:5%;">
+    							{% elif hypervisor == "Microsoft Hyper-V" %}
+    								<img src="{% static "images/hyperv.png" %}" height="60" width="120" style="margin-bottom:5%;">
+    							{% endif %}
+    						</label>
+    					</div>
+								<!--option value="{{ hypervisor }}">{{ hypervisor }} {% if hypervisor == "VMWare vSphere" %} <img src="{% static "images/vsphere.jpg" %}"> {% endif %}</option-->
+						{% endfor %}
+						
+
+						<br />
+
+						<select class="form-control">
+							{% for cloudStack in cloudStacks %}
+								<option value="{{ cloudStack }}">{{ cloudStack }}</option>
+							{% endfor %}
+						</select>
+					</div>
+					<div class="lowerForm">
+						<div class="lowerFormTitle">
+							Select DHCP Configuration
+						</div>
+						<label for="Gateway">Gateway</label>
+	    				<input type="text" class="form-control" id="gateway" placeholder="Gateway">
+	    				<button type="button" class="btn btn-primary btn-lg">Deploy</button>
+					</div>
+				</div>
+				<div class="col-xs-6" style="height:100%; border-left: 5px thick black;">
+					<div class="DHCP">
+							DHCP Configuration File
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="footer">
+		</div>
+	<!--/div-->
+</body>
+</html>

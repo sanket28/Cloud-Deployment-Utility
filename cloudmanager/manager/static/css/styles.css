@@ -1,0 +1,52 @@
+.upperFormTitle {
+	margin-top: 5%;
+	font-weight: bold;
+	font-size: 30px;
+	text-align: center;
+}
+
+.lowerFormTitle {
+	margin-top: 5%;
+	font-weight: bold;
+	font-size: 30px;
+	text-align: center;
+}
+
+.DHCP {
+	font-weight: bold;
+	font-size: 30px;
+	text-align: center;
+}
+
+.header {
+	font-size: 35px;
+	font-weight: bold;
+	color: #ffffff;
+	position:absolute; 
+	top:0px; 
+	left:0px; 
+	height:10%; 
+	right:0px;
+	overflow:hidden;
+	background-color: #333333;
+}
+
+.content {
+	position:absolute; 
+	top:10%; 
+	bottom:10%; 
+	left:0px; 
+	right:0px; 
+	overflow:auto;
+}
+
+.footer {
+	position:absolute; 
+	bottom:0px; 
+	left:0px; 
+	height:10%; 
+	right:0px;
+	overflow:hidden;
+	background-color: #333333;
+}
+

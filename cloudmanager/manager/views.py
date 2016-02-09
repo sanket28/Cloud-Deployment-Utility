@@ -3,9 +3,11 @@ from django.http import HttpResponse
 from django.template import loader
 
 def index(request):
-	hypervisors = ["VMWare", "XEN", "Microsoft"]
+	hypervisors = ["VMWare vSphere", "Xen Server", "Microsoft Hyper-V"]
+	cloudStacks = ["Apache CloudStack", "Cloud Foundry", "RedHat OpenShift"]
 	template = loader.get_template('manager/index.html')
 	context = {
-		'hypervisors': hypervisors
+		'hypervisors': hypervisors,
+		'cloudStacks': cloudStacks
 	}
 	return HttpResponse(template.render(context, request))
