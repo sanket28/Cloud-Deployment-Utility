@@ -1,0 +1,1 @@
+/home/cloudmanager/Cloud-Deployment-Utility/cloudmanager/manage.py
