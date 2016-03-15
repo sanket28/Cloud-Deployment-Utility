@@ -36,6 +36,8 @@
 		    								<img src="{% static "images/xen.png" %}" height="60" width="120" style="margin-bottom:5%;">
 		    							{% elif hypervisor == "Microsoft Hyper-V" %}
 		    								<img src="{% static "images/hyperv.png" %}" height="60" width="120" style="margin-bottom:5%;">
+		    							{% elif hypervisor == "KVM" %}
+		    								<img src="{% static "images/KVM.jpg" %}" height="60" width="120" style="margin-bottom:5%;">	
 		    							{% endif %}
 		    						</label>
 		    					<!--/div-->
@@ -57,6 +59,8 @@
 			    								<img src="{% static "images/cloudfoundry.png" %}" height="80" width="120" style="margin-bottom:5%;">
 			    							{% elif cloudStack == "RedHat OpenShift" %}
 			    								<img src="{% static "images/openshift.png" %}" height="60" width="120" style="margin-bottom:5%;">
+			    							{% elif cloudStack == "None" %}
+			    								<img src="{% static "images/none.png" %}" height="60" width="120" style="margin-bottom:5%;">
 			    							{% endif %}
 			    						</label>
 		    						<!--/div-->
