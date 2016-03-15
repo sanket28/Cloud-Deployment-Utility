@@ -10,6 +10,14 @@
 	border-bottom: 1px solid #CCC;
 }
 
+
+.statusTitle{
+	margin-top: 2%;
+	margin-left: 3%;
+	margin-right: 3%;
+	border-bottom: 1px solid #CCC;
+}
+
 .DHCP {
 	margin-top: 5%;
 	text-align: center;
@@ -70,3 +78,17 @@
 	margin-bottom: 4%;
 }
 
+.scroll {
+margin-top: 3%;
+margin-left: 20%;
+height: 50%;
+width: 60%;
+overflow-y: auto;
+border: 1px solid #666;
+background-color: #000000;
+padding: 8px;
+box-shadow: 10px 10px 5px #808080;
+font-weight: bold;
+font-family: "Courier New";
+color: #00FF00;
+}
