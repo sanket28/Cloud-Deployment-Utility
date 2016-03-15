@@ -21,8 +21,8 @@
 			<img src="{% static "images/northeastern.png" %}" height="60" width="240" style="float:right; margin-top:1%; margin-right:1%;">
 		</div>
 		<script>
-			var hostname = "test.mosquitto.org";
-			var port = 8080;
+			var hostname = "localhost";
+			var port = 1883;
 			var clientid = "cs8674-webApp";
 			var client = new Paho.MQTT.Client(hostname, port, clientid);
 
