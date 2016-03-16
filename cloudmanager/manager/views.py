@@ -38,15 +38,15 @@ def status(request):
 			if request.POST.get('cloudstackRadios') == "Apache-CloudStack":
 				print 'KMV-CLOUDSTACK'
 				
-				file_object.write("hyp_name = KVM-CLOUDSTACK")
+				file_object.write("hyp_name=KVM-CLOUDSTACK")
 				
  			else:
  				print "KVM"
- 				file_object.write("hyp_name = KVM")
+ 				file_object.write("hyp_name=KVM")
 
  		elif hyperV == "Xen-Server": 	
 			print 'XENSERVER'
- 			file_object.write("hyp_name = XENSERVER")
+ 			file_object.write("hyp_name=XENSERVER")
  		#print call(["ls", "-l"])
         else:
     		print "Oops! Something is broken."
