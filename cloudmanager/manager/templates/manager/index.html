@@ -29,15 +29,15 @@
 								{% for hypervisor in hypervisors %}
 								<!--div class="radio" style="margin-left: 25%;"-->
 									<label class="checkbox-inline">
-		    							<input type="radio" name="hypervisorRadios" id="optionsRadios1" value="{{ hypervisor }}" checked>
-		    							{% if hypervisor == "VMWare vSphere" %} 
+		    							<input type="radio" name="hypervisorRadios" id="{{ hypervisor }}" value="{{ hypervisor }}" checked>
+		    							{% if hypervisor == "VMWare-vSphere" %} 
 		    								<img src="{% static "images/vsphere.jpg" %}" height="60" width="140" style="margin-bottom:5%;">
-		    							{% elif hypervisor == "Xen Server" %}
+		    							{% elif hypervisor == "Xen-Server" %}
 		    								<img src="{% static "images/xen.png" %}" height="60" width="120" style="margin-bottom:5%;">
-		    							{% elif hypervisor == "Microsoft Hyper-V" %}
+		    							{% elif hypervisor == "Microsoft-Hyper-V" %}
 		    								<img src="{% static "images/hyperv.png" %}" height="60" width="120" style="margin-bottom:5%;">
 		    							{% elif hypervisor == "KVM" %}
-		    								<img src="{% static "images/KVM.jpg" %}" height="60" width="120" style="margin-bottom:5%;">	
+		    								<img src="{% static "images/KVM.png" %}" height="50" width="140" style="margin-bottom:5%;">	
 		    							{% endif %}
 		    						</label>
 		    					<!--/div-->
@@ -52,15 +52,15 @@
 								{% for cloudStack in cloudStacks %}
 									<!--div class="radio" style="margin-left: 25%;"-->
 										<label class="checkbox-inline">
-			    							<input type="radio" name="cloudstackRadios" id="optionsRadios2" value="{{ cloudStack }}" checked>
-			    							{% if cloudStack == "Apache CloudStack" %} 
+			    							<input type="radio" name="cloudstackRadios" id="{{ cloudStack }}" value="{{ cloudStack }}" checked>
+			    							{% if cloudStack == "Apache-CloudStack" %} 
 			    								<img src="{% static "images/apachecloudstack.png" %}" height="70" width="120" style="margin-bottom:5%;">
-			    							{% elif cloudStack == "Cloud Foundry" %}
+			    							{% elif cloudStack == "Cloud-Foundry" %}
 			    								<img src="{% static "images/cloudfoundry.png" %}" height="80" width="120" style="margin-bottom:5%;">
-			    							{% elif cloudStack == "RedHat OpenShift" %}
+			    							{% elif cloudStack == "RedHat-OpenShift" %}
 			    								<img src="{% static "images/openshift.png" %}" height="60" width="120" style="margin-bottom:5%;">
 			    							{% elif cloudStack == "None" %}
-			    								<img src="{% static "images/none.png" %}" height="60" width="120" style="margin-bottom:5%;">
+			    								<strong style="font-size: 18px; margin-left: 8px;">None</strong>
 			    							{% endif %}
 			    						</label>
 		    						<!--/div-->
@@ -163,6 +163,16 @@ log-facility local7;
 		<div class="footer">
 			<img src="{% static "images/northeastern.png" %}" height="60" width="240" style="float:right; margin-top:1%; margin-right:1%;">
 		</div>
+		<script>
+			document.getElementById('VMWare-vSphere').disabled = true;
+			document.getElementById('Microsoft-Hyper-V').disabled = true;
+			document.getElementById('Cloud-Foundry').disabled = true;
+			document.getElementById('RedHat-OpenShift').disabled = true;
+
+			if(document.getElementById('Xen-Server').checked === true) {
+				document.getElementById('Apache-CloudStack').disabled = true;
+			}
+		</script>
 	<!--/div-->
 </body>
 </html>

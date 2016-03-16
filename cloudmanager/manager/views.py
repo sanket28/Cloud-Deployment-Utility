@@ -6,8 +6,8 @@ import os
 
 
 def index(request):
-	hypervisors = ["VMWare vSphere", "Xen Server", "Microsoft Hyper-V", "KVM"]
-	cloudStacks = ["Apache CloudStack", "Cloud Foundry", "RedHat OpenShift", "None"]
+	hypervisors = ["VMWare-vSphere", "Xen-Server", "Microsoft-Hyper-V", "KVM"]
+	cloudStacks = ["Apache-CloudStack", "Cloud-Foundry", "RedHat-OpenShift", "None"]
 	template = loader.get_template('manager/index.html')
 	context = {
 		'hypervisors': hypervisors,
@@ -35,7 +35,7 @@ def status(request):
 		hyperV = request.POST.get('hypervisorRadios')
 
 		if hyperV == "KVM":
-			if request.POST.get('cloudstackRadios') == "Apache CloudStack":
+			if request.POST.get('cloudstackRadios') == "Apache-CloudStack":
 				print 'KMV-CLOUDSTACK'
 				
 				file_object.write("hyp_name = KVM-CLOUDSTACK")
@@ -44,7 +44,7 @@ def status(request):
  				print "KVM"
  				file_object.write("hyp_name = KVM")
 
- 		elif hyperV == "Xen Server": 	
+ 		elif hyperV == "Xen-Server": 	
 			print 'XENSERVER'
  			file_object.write("hyp_name = XENSERVER")
  		#print call(["ls", "-l"])
