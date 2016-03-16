@@ -24,7 +24,7 @@ def status(request):
 
 
 	if (request.POST):
-		save_path = '/home/apoorv/'
+		save_path = '/usr/share/nginx/html/'
 		if os.path.isfile(save_path+"Shell_file.txt") == True:
 			os.remove(save_path+"Shell_file.txt")
 
