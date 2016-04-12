@@ -2,6 +2,7 @@
 
 SSH_Password="cs8674-cloudmanager" # This is the SSH password for the management server
 MQTT_Client_Directory="/home/cloudmanager/mqttclient/"
+Script_Directory="/home/cloudmanager/Cloud-Deployment-Utility/CS8674-Shell-Scripts/"
 
 ${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Installation started...."
 
@@ -20,13 +21,13 @@ if [ "$Hypervisor" = 'XENSERVER' ]
 
 	# This creates a new GPT partition table and creates 3 partitions
 	# 1st and 2nd partitions are 4GB and 3rd is an lvm partition which extends to the end of the disk
-	fdisk $Device_ID < fdisk_xen.input
+	fdisk $Device_ID < ${Script_Directory}fdisk_xen.input
 
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!" 
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Formatting partition with ext3..." 
 	
 	# Format the first partition using ext3
-	mkfs.ext3 ${Device_ID}1 < mkfs_xen.input
+	mkfs.ext3 ${Device_ID}1 < ${Script_Directory}mkfs_xen.input
 
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Setting appropariate flags on partitions..."
@@ -35,7 +36,7 @@ if [ "$Hypervisor" = 'XENSERVER' ]
 	# Flags for 1st partition -> legcy_boot, msftdata
 	# Flags for 2nd partition -> msftdata
 	# Flags for 3rd partition -> lvm
-	parted $Device_ID < parted_xen.input
+	parted $Device_ID < ${Script_Directory}parted_xen.input
 
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Fetching xenserver images and writing to disk...."	
@@ -58,13 +59,13 @@ elif [ "$Hypervisor" = 'KVM' ] || [ "$Hypervisor" = 'KVM-CLOUDSTACK' ]
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Creating partitions with fdisk...."	
 
 	# This creates a new DOS partition table and creates 1 partition of 6GB
-	fdisk $Device_ID < fdisk_kvm.input
+	fdisk $Device_ID < ${Script_Directory}fdisk_kvm.input
 
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"	
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Formatting the parition to ext4...."	
 
 	# This formats the 1st partition using ext4
-	mkfs.ext4 ${Device_ID}1 < mkfs_kvm.input
+	mkfs.ext4 ${Device_ID}1 < ${Script_Directory}mkfs_kvm.input
 
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 
@@ -73,13 +74,17 @@ elif [ "$Hypervisor" = 'KVM' ] || [ "$Hypervisor" = 'KVM-CLOUDSTACK' ]
 	if [ "$Hypervisor" = 'KVM' ]
 		then
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Fetching KVM clone...."
-		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
+
 		sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "dd if=/home/cloudmanager/ubuntu-kvm.iso" | dd of=${Device_ID}1 bs=10M
+
+		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 	elif [ "$Hypervisor" = 'KVM-CLOUDSTACK' ]
 		then
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Fetching KVM-CLOUDSTACK clone...."
-		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
+
 		sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "dd if=/home/cloudmanager/ubuntu-kvm-cloudstack.iso" | dd of=${Device_ID}1 bs=10M
+
+		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 	fi
 
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!" 
@@ -88,13 +93,13 @@ elif [ "$Hypervisor" = 'KVM' ] || [ "$Hypervisor" = 'KVM-CLOUDSTACK' ]
 	# This deletes the 1st partition and creates a new one of 100GB
 	# It then creates a swap partition of 5GB. This can be changed in fdisk_kvm_extend.input to create partitions of 
 	# different sizes as per your requirements
-	fdisk $Device_ID < fdisk_kvm_extend.input
+	fdisk $Device_ID < ${Script_Directory}fdisk_kvm_extend.input
 
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Setting appropariate flags on partitions.."
 
 	# This sets the boot flag on the first partition
-	parted $Device_ID < parted_kvm.input
+	parted $Device_ID < ${Script_Directory}parted_kvm.input
 
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Checking the parition for resize operation...."	
