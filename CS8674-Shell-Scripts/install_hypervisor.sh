@@ -1,6 +1,7 @@
 #!/bin/bash
 
 SSH_Password="cs8674-cloudmanager" # This is the SSH password for the management server
+MQTT_Client_Directory="/home/cloudmanager/mqttclient/"
 
 ${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Installation started...."
 
