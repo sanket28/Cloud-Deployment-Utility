@@ -19,7 +19,7 @@ if [ "$Hypervisor" = 'XENSERVER' ]
 
 	# This creates a new GPT partition table and creates 3 partitions
 	# 1st and 2nd partitions are 4GB and 3rd is an lvm partition which extends to the end of the disk
-    fdisk $Device_ID < fdisk_xen.input
+	fdisk $Device_ID < fdisk_xen.input
 
 	/home/cloudmanager/mqttclient/mqttcli pub --conf /home/cloudmanager/mqttclient/server.json -t "cs8674/InstallStatus" -m "Done!" 
 	/home/cloudmanager/mqttclient/mqttcli pub --conf /home/cloudmanager/mqttclient/server.json -t "cs8674/InstallStatus" -m "Formatting partition with ext3..." 
