@@ -102,24 +102,6 @@ elif [ "$Hypervisor" = 'KVM' ] || [ "$Hypervisor" = 'KVM-CLOUDSTACK' ]
 	parted $Device_ID < ${Script_Directory}parted_kvm.input
 
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
-	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Checking the parition for resize operation...."	
-	
-	# Checks the first partition before resizing
-	e2fsck -p -f ${Device_ID}1
-
-	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
-	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Resizing the partition...."	
-	
-	# Resizes the 1st partition to 100 GB so the dd restored clone of 6 GB can use all of the 100 GB
-	resize2fs ${Device_ID}1
-
-	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
-	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Installing the MBR....."	
-
-	# Install the MBR
-	sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "dd if=/home/cloudmanager/ubuntu-kvm-mbr.iso" | dd of=$Device_ID bs=512 count=1
-
-	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Setting swap and updating fstab entries..."
 
 	# Make partition number 5 as swap and store its UUID in the UUID variable
@@ -136,6 +118,24 @@ elif [ "$Hypervisor" = 'KVM' ] || [ "$Hypervisor" = 'KVM-CLOUDSTACK' ]
 
 	# Unmount the 1st partition
 	umount ${Device_ID}1
+
+	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
+	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Checking the parition for resize operation...."	
+	
+	# Checks the first partition before resizing
+	e2fsck -p -f ${Device_ID}1
+
+	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
+	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Resizing the partition...."	
+	
+	# Resizes the 1st partition to 100 GB so the dd restored clone of 6 GB can use all of the 100 GB
+	resize2fs ${Device_ID}1
+
+	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
+	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Installing the MBR....."	
+
+	# Install the MBR
+	sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "dd if=/home/cloudmanager/ubuntu-kvm-mbr.iso" | dd of=$Device_ID bs=512 count=1
 
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 fi
