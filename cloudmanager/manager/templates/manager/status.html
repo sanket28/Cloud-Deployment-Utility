@@ -23,10 +23,13 @@
 			<img src="{% static "images/northeastern.png" %}" height="60" width="240" style="float:right; margin-top:1%; margin-right:1%;">
 		</div>
 		<script>
-			var hostname = "192.168.1.42";
+			// This block of code connects to the MQTT server running on the management server. It is subscribed to the 
+			// 'cs8674/InstallStatus' topic. The shell script will send diagonstic messages to this topic which will
+			// populate on the web page
+			var hostname = "192.168.1.42"; // MQTT server address
 			var port = 9001;
 			var clientid = "cs8674-status";
-			var client = new Paho.MQTT.Client(hostname, port, clientid);
+			var client = new Paho.MQTT.Client(hostname, port, clientid); // MQTT client object
 
 			var options = { 
 			     //connection attempt timeout in seconds
@@ -34,7 +37,7 @@
 			 
 			     //Gets Called if the connection has successfully been established
 			     onSuccess: function () {
-			         client.subscribe("cs8674/InstallStatus", {qos: 0});
+			         client.subscribe("cs8674/InstallStatus", {qos: 0}); // Subscribe to the 'cs8674/InstallStatus' topic
 			     },
 			 
 			     //Gets Called if the connection could not be established
@@ -43,8 +46,8 @@
 			     }			 
 			};
 
- 			client.onMessageArrived = onMessageArrived;
- 			client.onConnectionLost = onConnectionLost;
+ 			client.onMessageArrived = onMessageArrived; // Set up callback for when messages arrive on the subscribed topic
+ 			client.onConnectionLost = onConnectionLost; // Callback for when connection is lost
  
 			//Attempt to connect
 			client.connect(options);
@@ -56,10 +59,10 @@
 			}
 
 			function onMessageArrived(message) {
-			  var div = document.getElementById('message');
+			  var div = document.getElementById('message'); // Get the deployment status div by its ID
 
 			  if(message.payloadString === "Done!") {
-			  	div.innerHTML = message.payloadString;
+			  	div.innerHTML = div.innerHTML + message.payloadString; // If 'Done!' is receieved don't create a new line
 			  } else {
 			  	div.innerHTML = div.innerHTML + '<br />' + message.payloadString;
 			  }
