@@ -4,7 +4,8 @@ from django.template import loader
 from subprocess import call
 import os
 
-
+"""This renders the index.html page from the templates directory. It fills up the radio buttons from the values in the
+	hypervisors and cloudStacks arrays"""
 def index(request):
 	hypervisors = ["VMWare-vSphere", "Xen-Server", "Microsoft-Hyper-V", "KVM"]
 	cloudStacks = ["Apache-CloudStack", "Cloud-Foundry", "RedHat-OpenShift", "None"]
@@ -16,39 +17,48 @@ def index(request):
 
 	return HttpResponse(template.render(context, request))
 
+
+"""This function renders the status.html page from the templates directory. It also takes the request object from the 
+	index method and determines the selected cloud configuration and saves it to a file 'cloud_configuration.txt' located
+	at /home/cloudmanager. This file is fetched by the shell script running on client machines to determine the cloud
+	configuration to deploy"""
 def status(request):
 	template = loader.get_template('manager/status.html')
 	context = {
-		'test': 'cool'
+		'test': 'cool' # We need some kind of context to render the page. This doesn't actually do anything
 	}
 
 
 	if (request.POST):
-		save_path = '/usr/share/nginx/html/'
-		if os.path.isfile(save_path+"Shell_file.txt") == True:
+		save_path = '/home/cloudmanager/'
+		if os.path.isfile(save_path+"cloud_configuration.txt") == True: # If the file already exists, remove it
 			os.remove(save_path+"Shell_file.txt")
 
-		completeName = os.path.join(save_path, "Shell_file.txt")
+		completeName = os.path.join(save_path, "cloud_configuration.txt")
+
 		print request.POST.get('hypervisorRadios')
 		print(completeName)
-		file_object = open(completeName, 'w')
-		hyperV = request.POST.get('hypervisorRadios')
 
+		file_object = open(completeName, 'w') # Open the file for writing
+		hyperV = request.POST.get('hypervisorRadios') # Get the selected hypervisor
+
+		# At the moment we only support KVM, KVM + Apache Cloudstack and XEN, so we only check for those configuraions
 		if hyperV == "KVM":
 			if request.POST.get('cloudstackRadios') == "Apache-CloudStack":
 				print 'KMV-CLOUDSTACK'
+				file_object.write("hyp_name=KVM-CLOUDSTACK") # Write to file
 				
-				file_object.write("hyp_name=KVM-CLOUDSTACK")
-				
- 			else:
+ 			elif request.POST.get('cloudstackRadios') == "None":
  				print "KVM"
  				file_object.write("hyp_name=KVM")
 
  		elif hyperV == "Xen-Server": 	
 			print 'XENSERVER'
  			file_object.write("hyp_name=XENSERVER")
- 		#print call(["ls", "-l"])
+ 	
         else:
     		print "Oops! Something is broken."
-		file_object.close()
+
+		file_object.close() # Close the file
+
 	return HttpResponse(template.render(context, request))
