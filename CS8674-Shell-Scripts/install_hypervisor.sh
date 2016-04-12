@@ -6,7 +6,7 @@ ${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -
 
 # The Hypervisor variable will contain the selected cloud configuration fetched from the cloud_configuration.txt file 
 # from the management server Device_ID variable will contain the hard drive identifier ex. /dev/sda
-Hypervisor=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.209 "cat /home/cloudmanager/cloud_configuration.txt" | grep hyp_name -m 1 | grep -Po 'hyp_name=\K[^:]+'`     
+Hypervisor=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "cat /home/cloudmanager/cloud_configuration.txt" | grep hyp_name -m 1 | grep -Po 'hyp_name=\K[^:]+'`     
 Device_ID=`fdisk -l | grep Disk -m 1 | grep -Po 'Disk \K[^:]+'`
 
 ${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$Hypervisor hypervisor was selected by user"
