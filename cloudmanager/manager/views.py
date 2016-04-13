@@ -9,10 +9,12 @@ import os
 def index(request):
 	hypervisors = ["VMWare-vSphere", "Xen-Server", "Microsoft-Hyper-V", "KVM"]
 	cloudStacks = ["Apache-CloudStack", "Cloud-Foundry", "RedHat-OpenShift", "None"]
+	reboot = ["Yes", "No"]
 	template = loader.get_template('manager/index.html')
 	context = {
 		'hypervisors': hypervisors,
-		'cloudStacks': cloudStacks
+		'cloudStacks': cloudStacks,
+		'reboot': reboot
 	}
 
 	return HttpResponse(template.render(context, request))
@@ -34,13 +36,21 @@ def status(request):
 		if os.path.isfile(save_path+"cloud_configuration.txt") == True: # If the file already exists, remove it
 			os.remove(save_path+"cloud_configuration.txt")
 
-		completeName = os.path.join(save_path, "cloud_configuration.txt")
+		if os.path.isfile(save_path+"reboot.txt") == True: # If the file already exists, remove it
+			os.remove(save_path+"reboot.txt")
 
-		print request.POST.get('hypervisorRadios')
-		print(completeName)
+		cloudConfigPath = os.path.join(save_path, "cloud_configuration.txt")
+		rebootConfigPath = os.path.join(save_path, "reboot.txt")
 
-		file_object = open(completeName, 'w') # Open the file for writing
+		#print request.POST.get('hypervisorRadios')
+		print(cloudConfigPath)
+		print(rebootConfigPath)
+
+		file_object = open(cloudConfigPath, 'w') # Open the file for writing
+		file_object2 = open(rebootConfigPath, 'w')
+
 		hyperV = request.POST.get('hypervisorRadios') # Get the selected hypervisor
+		rebootStatus = request.POST,get('rebootRadios')
 
 		# At the moment we only support KVM, KVM + Apache Cloudstack and XEN, so we only check for those configuraions
 		if hyperV == "KVM":
@@ -60,5 +70,13 @@ def status(request):
     		print "Oops! Something is broken."
 
 		file_object.close() # Close the file
+
+		if rebootStatus == "Yes":
+			file_object2.write("reboot_status=YES")
+
+		else:
+			file_object2.write("reboot_status=NO")
+
+		file_object2.close()
 
 	return HttpResponse(template.render(context, request))

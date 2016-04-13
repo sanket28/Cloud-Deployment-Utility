@@ -4,8 +4,19 @@
 	border-bottom: 1px solid #CCC;
 }
 
+.rightForm {
+	width: 95%;
+}
+
+.selectOptionsTitle {
+	margin-top: 6.5%;
+	margin-left: 5%;
+	border-bottom: 1px solid #CCC;
+}
+
 .lowerFormTitle {
 	margin-top: 5%;
+	padding-bottom: 2%;
 	margin-left: 5%;
 	border-bottom: 1px solid #CCC;
 }
@@ -16,11 +27,6 @@
 	margin-left: 3%;
 	margin-right: 3%;
 	border-bottom: 1px solid #CCC;
-}
-
-.DHCP {
-	margin-top: 5%;
-	text-align: center;
 }
 
 .header {

@@ -14,9 +14,9 @@
 		</div>
 		<div class="content">
 			<div class="row">
-				<div class="col-xs-6" style="height:100%;">
-					<form action="{% url 'status' %}" method="post">
-						{% csrf_token %}
+				<form action="{% url 'status' %}" method="post">
+					{% csrf_token %}
+					<div class="col-xs-6" style="height:100%;">
 						<div class="upperForm">
 							<div class="upperFormTitle">
 								<h2><strong>Select Cloud Configuration</strong><h2>
@@ -68,6 +68,31 @@
 								<br />
 								<br />
 								<input type="submit" value="Configure" class="btn btn-primary btn-lg" style="margin-left:3%;">
+							</div>
+						</div>
+					</div>
+					<div class="col-xs-6" style="height:100%;">
+						<div class="rightForm">
+	 						<div class="selectOptionsTitle">
+	 							<h2><strong>Select Deploy Options</strong></h2>
+	 						</div>
+	 						<div style="margin-left:5%; margin-bottom:2%; margin-top:4%;">
+								<h4><small>Do you want to reboot the Debian Live OS after deployment?</small></h4>
+							</div>
+							{% for rebootStatus in reboot %}
+								<!--div class="radio" style="margin-left: 25%;"-->
+									<label class="checkbox-inline" style="margin-left:3%;">
+		    							<input type="radio" name="rebootRadios" id="{{ rebootStatus }}" value="{{ rebootStatus }}" checked>
+		    							{% if rebootStatus == "No" %} 
+		    								<strong style="font-size: 18px; margin-left: 8px;">Yes</strong>
+		    							{% elif rebootStatus == "Yes" %}
+		    								<strong style="font-size: 18px; margin-left: 8px;">No</strong>
+		    							{% endif %}
+		    						</label>
+	    						<!--/div-->
+							{% endfor %}
+							<div style="margin-left:5%; margin-bottom:2%; margin-top:4%;">
+								<h5><strong>Note: </strong><small>If you choose "Yes", you will receive credentials to log on to the system using SSH when you click "Configure"</small></h5>
 							</div>
 						</div>
 					</div>
