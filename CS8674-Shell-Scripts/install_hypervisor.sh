@@ -143,13 +143,14 @@ elif [ "$Hypervisor" = 'KVM' ] || [ "$Hypervisor" = 'KVM-CLOUDSTACK' ]
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 fi
 
-${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Congrats ! The process was completed successfully.The system will now reboot."
+${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Congrats ! The process was completed successfully."
 
 # Store the syslog on the management server
 cat /var/log/syslog | sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "cat > /home/cloudmanager/deployment_log/syslog-$IP_Address.txt"
 
 if [ "$Reboot_Status" = 'YES' ]
 	then
+	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: The system will now reboot"
 	reboot
 fi
  
