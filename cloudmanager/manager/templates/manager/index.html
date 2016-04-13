@@ -83,10 +83,10 @@
 								<!--div class="radio" style="margin-left: 25%;"-->
 									<label class="checkbox-inline" style="margin-left:3%;">
 		    							<input type="radio" name="rebootRadios" id="{{ rebootStatus }}" value="{{ rebootStatus }}" checked>
-		    							{% if rebootStatus == "No" %} 
-		    								<strong style="font-size: 18px; margin-left: 8px;">No</strong>
-		    							{% elif rebootStatus == "Yes" %}
+		    							{% if rebootStatus == "Yes" %} 
 		    								<strong style="font-size: 18px; margin-left: 8px;">Yes</strong>
+		    							{% elif rebootStatus == "No" %}
+		    								<strong style="font-size: 18px; margin-left: 8px;">No</strong>
 		    							{% endif %}
 		    						</label>
 	    						<!--/div-->
