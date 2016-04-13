@@ -54,6 +54,16 @@ def status(request):
 
 		print(rebootStatus)
 
+		if rebootStatus == "Yes":
+			print "YES"
+			file_object2.write("reboot_status=YES")
+
+		else:
+			print "NO"
+			file_object2.write("reboot_status=NO")
+
+		file_object2.close()
+		
 		# At the moment we only support KVM, KVM + Apache Cloudstack and XEN, so we only check for those configuraions
 		if hyperV == "KVM":
 			if request.POST.get('cloudstackRadios') == "Apache-CloudStack":
@@ -72,15 +82,5 @@ def status(request):
     		print "Oops! Something is broken."
 
 		file_object.close() # Close the file
-
-		if rebootStatus == "Yes":
-			print "YES"
-			file_object2.write("reboot_status=YES")
-
-		else:
-			print "NO"
-			file_object2.write("reboot_status=NO")
-
-		file_object2.close()
 
 	return HttpResponse(template.render(context, request))
