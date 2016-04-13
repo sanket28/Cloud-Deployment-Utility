@@ -52,6 +52,8 @@ def status(request):
 		hyperV = request.POST.get('hypervisorRadios') # Get the selected hypervisor
 		rebootStatus = request.POST.get('rebootRadios')
 
+		print(rebootStatus)
+
 		# At the moment we only support KVM, KVM + Apache Cloudstack and XEN, so we only check for those configuraions
 		if hyperV == "KVM":
 			if request.POST.get('cloudstackRadios') == "Apache-CloudStack":
