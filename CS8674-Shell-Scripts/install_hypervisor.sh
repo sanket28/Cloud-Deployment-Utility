@@ -141,6 +141,18 @@ elif [ "$Hypervisor" = 'KVM' ] || [ "$Hypervisor" = 'KVM-CLOUDSTACK' ]
 	sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "dd if=/home/cloudmanager/mbr.bin" | dd of=$Device_ID bs=446 count=1
 
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
+	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Installing GRUB Bootloader....."	
+
+	# We will now mount the first partition to install GRUB on the MBR
+	mount ${Device_ID}1 /mnt/device
+
+	# Install GRUB Bootloader on the MBR
+	grub-install --boot-directory=/mnt/device/boot ${Device_ID}
+
+	# Unmount the 1st partition
+	umount ${Device_ID}1
+
+	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 fi
 
 ${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Congrats ! The process was completed successfully."
