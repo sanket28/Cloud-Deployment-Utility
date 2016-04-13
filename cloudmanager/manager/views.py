@@ -72,9 +72,11 @@ def status(request):
 		file_object.close() # Close the file
 
 		if rebootStatus == "Yes":
+			print "YES"
 			file_object2.write("reboot_status=YES")
 
 		else:
+			print "NO"
 			file_object2.write("reboot_status=NO")
 
 		file_object2.close()
