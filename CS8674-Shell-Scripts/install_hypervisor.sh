@@ -5,7 +5,7 @@ MQTT_Client_Directory="/home/cloudmanager/mqttclient/" # Directory where the mqt
 Script_Directory="/home/cloudmanager/Cloud-Deployment-Utility/CS8674-Shell-Scripts/" # Directory where the script exists
 IP_Address=`ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{print $1}'` # Get the IP address of this client. This will work only when the eth0 interface exists. Other interfaces? Multiple NICs?
 
-${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/ClientStatus" -m "$IP_Address"
+${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/OnlineStatus" -m "$IP_Address"
 
 ${MQTT_Client_Directory}mqttcli sub --conf ${MQTT_Client_Directory}server.json -t "cs8674/DeployApproved" > ${MQTT_Client_Directory}approval.txt
 Approval=`tac ${MQTT_Client_Directory}approval.txt | egrep -m 1 .`
@@ -170,9 +170,11 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 	if [ "$Reboot_Status" = 'YES' ]
 		then
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: The system will now reboot"
+		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/OfflineStatus" -m "$IP_Address"
 		reboot
 	fi
 else
+	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/OfflineStatus" -m "$IP_Address"
 	poweroff
 fi
  
