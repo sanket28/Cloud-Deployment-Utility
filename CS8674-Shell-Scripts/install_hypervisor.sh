@@ -10,7 +10,7 @@ ${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -
 ${MQTT_Client_Directory}mqttcli sub --conf ${MQTT_Client_Directory}server.json -t "cs8674/DeployApproved" > ${MQTT_Client_Directory}approval.txt
 Approval=`tac ${MQTT_Client_Directory}approval.txt | egrep -m 1 .`
 
-if [ "$Approval" = 'Deploy-$IP_Address' ]
+if [ "$Approval" = 'Deploy-'${IP_Address} ]
 	then
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Installation started...."
 
