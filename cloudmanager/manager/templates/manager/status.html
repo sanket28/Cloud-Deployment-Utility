@@ -56,7 +56,8 @@
 			     //Gets Called if the connection has successfully been established
 			     onSuccess: function () {
 			         client.subscribe("cs8674/InstallStatus", {qos: 0}); // 'cs8674/InstallStatus' topic will receive diagnostic messages from the client
-			         client.subscribe("cs8674/ClientStatus", {qos: 0}); // 'cs8674/ClientStatus' topic will receive messages when the client becomes alive
+			         client.subscribe("cs8674/OnlineStatus", {qos: 0}); // 'cs8674/ClientStatus' topic will receive messages when the client becomes alive
+			         client.subscribe("cs8674/OfflineStatus", {qos: 0});
 			     },
 			 
 			     //Gets Called if the connection could not be established
@@ -93,11 +94,27 @@
 					} else {
 						div.innerHTML = div.innerHTML + '<br />' + message.payloadString;
 					}
-				} else if(message.destinationName === "cs8674/ClientStatus") { // Populate the "Online Clients" dialogue box
+				} else if(message.destinationName === "cs8674/OnlineStatus") { // Populate the "Online Clients" dialogue box
 					console.log(message.payloadString);
 					receivedMessage = message.payloadString; // message.payloadString will contain the IP address of the client
-					var clientStatusDiv = document.getElementById("clientsMessage");
-					clientStatusDiv.innerHTML = clientStatusDiv.innerHTML + '<br />' + '<img src="{% static "images/greenlight.png" %}" height="10" width="10" style="margin-right:2%">' + message.payloadString + '<button type="button" class="btn btn-primary btn-xs" style="margin-left:2%;" onclick="sendDeployMessage()">Deploy</button>' + '<br />';
+					var replace = document.getElementById(message.payloadString);
+					if(replace !== null) {
+						replace.innerHTML = '<img src="{% static "images/greenlight.png" %}" height="10" width="10" style="margin-right:2%">' + message.payloadString + '<button type="button" class="btn btn-primary btn-xs" style="margin-left:2%;" onclick="sendDeployMessage()">Deploy</button>';
+					} else {
+						var parentDiv = document.getElementById("clientsMessage");
+						var childDiv = document.createElement('div');
+						childDiv.setAttribute("id", message.payloadString);
+						childDiv.setAttribute("style", "margin-bottom:4%;");
+						childDiv.innerHTML = '<img src="{% static "images/greenlight.png" %}" height="10" width="10" style="margin-right:2%">' + message.payloadString + '<button type="button" class="btn btn-primary btn-xs" style="margin-left:2%;" onclick="sendDeployMessage()">Deploy</button>';
+						parentDiv.appendChild(childDiv);
+					}
+					//clientStatusDiv.innerHTML = clientStatusDiv.innerHTML + '<br />' + 
+				} else if(message.destinationName === "cs8674/OfflineStatus") {
+					var replaceDiv = document.getElementById(message.payloadString);
+					if(replaceDiv !== null) {
+						console.log("Found div");
+						replaceDiv.innerHTML = '<img src="{% static "images/redlight.png" %}" height="10" width="10" style="margin-right:2%">' + message.payloadString;
+					}
 				}
 			}
 		</script>
