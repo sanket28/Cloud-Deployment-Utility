@@ -32,7 +32,7 @@ def status(request):
 
 
 	if (request.POST):
-		save_path = '/Users/sanketdeshpande'
+		save_path = '/home/cloudmanager/'
 		if os.path.isfile(save_path+"cloud_configuration.txt") == True: # If the file already exists, remove it
 			os.remove(save_path+"cloud_configuration.txt")
 
