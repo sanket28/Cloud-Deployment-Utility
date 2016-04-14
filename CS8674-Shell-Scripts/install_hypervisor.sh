@@ -10,6 +10,18 @@ ${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -
 ${MQTT_Client_Directory}mqttcli sub --conf ${MQTT_Client_Directory}server.json -t "cs8674/DeployApproved" > ${MQTT_Client_Directory}approval.txt
 Approval=`tac ${MQTT_Client_Directory}approval.txt | egrep -m 1 .`
 
+
+#Fuction to handle error and graceful exit 
+
+handle_error () {
+    
+if [ $? != 0 ]
+  then
+	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Some error occured. Please visit the syslog page on the web application for more details"
+	poweroff
+fi
+}
+
 if [ "$Approval" = 'Deploy-'${IP_Address} ]
 	then
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Installation started...."
@@ -32,12 +44,14 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 		# This creates a new GPT partition table and creates 3 partitions
 		# 1st and 2nd partitions are 4GB and 3rd is an lvm partition which extends to the end of the disk
 		fdisk $Device_ID < ${Script_Directory}fdisk_xen.input
+		handle_error
 
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!" 
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Formatting partition with ext3..." 
 		
 		# Format the first partition using ext3
 		mkfs.ext3 ${Device_ID}1 < ${Script_Directory}mkfs_xen.input
+		handle_error
 
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Setting appropariate flags on partitions..."
@@ -47,6 +61,7 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 		# Flags for 2nd partition -> msftdata
 		# Flags for 3rd partition -> lvm
 		parted $Device_ID < ${Script_Directory}parted_xen.input
+		handle_error
 
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Fetching xenserver images and writing to disk...."	
@@ -54,13 +69,14 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 		# This fetches the XenServer cloned image using ssh from the management server and restores it to the 1st partition
 		# using dd
 		sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "dd if=/home/cloudmanager/xen.iso" | dd of=${Device_ID}1 bs=10M
+		handle_error
 
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Installing MBR...."
 
 		# This installs the MBR on the device
 		dd bs=440 conv=notrunc count=1 if=/usr/lib/syslinux/mbr/gptmbr.bin of=$Device_ID
-		
+		handle_error		
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 
 
@@ -70,12 +86,14 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 
 		# This creates a new DOS partition table and creates 1 partition of 6GB
 		fdisk $Device_ID < ${Script_Directory}fdisk_kvm.input
+		handle_error
 
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"	
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Formatting the parition to ext4...."	
 
 		# This formats the 1st partition using ext4
 		mkfs.ext4 ${Device_ID}1 < ${Script_Directory}mkfs_kvm.input
+		handle_error
 
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 
@@ -86,14 +104,15 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Fetching KVM clone...."
 
 			sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "dd if=/home/cloudmanager/ubuntu-kvm.iso" | dd of=${Device_ID}1 bs=10M
-
+			handle_error
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
+
 		elif [ "$Hypervisor" = 'KVM-CLOUDSTACK' ]
 			then
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Fetching KVM-CLOUDSTACK clone...."
 
 			sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "dd if=/home/cloudmanager/ubuntu-kvm-cloudstack.iso" | dd of=${Device_ID}1 bs=10M
-
+			handle_error
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		fi
 
@@ -104,61 +123,61 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 		# It then creates a swap partition of 5GB. This can be changed in fdisk_kvm_extend.input to create partitions of 
 		# different sizes as per your requirements
 		fdisk $Device_ID < ${Script_Directory}fdisk_kvm_extend.input
-
+		handle_error
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Setting appropariate flags on partitions.."
 
 		# This sets the boot flag on the first partition
 		parted $Device_ID < ${Script_Directory}parted_kvm.input
-
+		handle_error
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Setting swap and updating fstab entries..."
 
 		# Make partition number 5 as swap and store its UUID in the UUID variable
 		UUID=`mkswap ${Device_ID}5 | grep UUID= | cut -d '=' -f2` 
-
+		handle_error
 		# Create directory to mount the first partition. We need to change the swap partition UUID in /etc/fstab
 		mkdir /mnt/device
-
+		handle_error
 		# We will now mount the first partition to update the swap UUID in /etc/fstab
 		mount ${Device_ID}1 /mnt/device
-
+		handle_error
 		# Update UUID of swap partition
 		sed -i -e ':a;N;$!ba;s/UUID=[A-Fa-f0-9-]*/UUID=$UUID/3' /mnt/device/etc/fstab
-
+		handle_error
 		# Unmount the 1st partition
 		umount ${Device_ID}1
-
+		handle_error
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Checking the parition for resize operation...."	
 		
 		# Checks the first partition before resizing
 		e2fsck -p -f ${Device_ID}1
-
+		handle_error
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Resizing the partition...."	
 		
 		# Resizes the 1st partition to 100 GB so the dd restored clone of 6 GB can use all of the 100 GB
 		resize2fs ${Device_ID}1
-
+		handle_error
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Installing the MBR....."	
 
 		# Install the MBR
 		sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "dd if=/home/cloudmanager/mbr.bin" | dd of=$Device_ID bs=446 count=1
-
+		handle_error
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Installing GRUB Bootloader....."	
 
 		# We will now mount the first partition to install GRUB on the MBR
 		mount ${Device_ID}1 /mnt/device
-
+		handle_error
 		# Install GRUB Bootloader on the MBR
 		grub-install --boot-directory=/mnt/device/boot ${Device_ID}
-
+		handle_error
 		# Unmount the 1st partition
 		umount ${Device_ID}1
-
+		handle_error
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 	fi
 
@@ -166,7 +185,7 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 
 	# Store the syslog on the management server
 	cat /var/log/syslog | sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "cat > /home/cloudmanager/deployment_log/syslog-$IP_Address.txt"
-
+	handle_error
 	if [ "$Reboot_Status" = 'YES' ]
 		then
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: The system will now reboot"
