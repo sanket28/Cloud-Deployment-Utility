@@ -11,13 +11,30 @@
 <body>
 	<!--div class="container"-->
 		<div class="header">
-			<div style="margin-top:1%; margin-left:0.5%;">Cloud Deployment Utility</div>
+			<div style="margin-top:1%; margin-left:0.5%;">HyperDrive</div>
 		</div>
 		<div class="content">
 			<div class="statusTitle">
-				<h2><strong>Deployment status</strong><h2>
+				<h2><strong>Deployment status</strong></h2>
 			</div>
-			<div class="scroll" id="message"></div>
+			<div class="col-xs-3" style="height:100%;">
+				<div class="deployClients">
+					<h5><strong>Select the clients to deploy:</strong></h5>
+					<h5><small>Please boot your client machines over the network and wait for the list below to popluate with your client IP and status. You will see the deployment status in the black dialogue box at the right</small></h5>
+					<h5><small>If you chose not to reboot the Debian Live OS after deployment, you can login using SSH with the credentials given below. After loogging in you may switch to the root user with the same password as given below:</small></h5>
+					<h5><small>Username: debug</small></h5>
+					<h5><small>Password: cs8675</small></h5>
+					<h5><small>SSH IP: See below</small></h5>
+				</div>
+				<div class="clientsScroll">
+					<div id="clientsMessage"></div>
+				</div>
+			</div>
+			<div class="col-xs-6" style="height:100%;">
+				<div class="deploymentStatus">
+					<div class="scroll" id="message"></div>
+				</div>
+			</div>
 		</div>
 		<div class="footer">
 			<img src="{% static "images/northeastern.png" %}" height="60" width="240" style="float:right; margin-top:1%; margin-right:1%;">
@@ -29,6 +46,7 @@
 			var hostname = "192.168.1.42"; // MQTT server address
 			var port = 9001;
 			var clientid = "cs8674-status";
+			var receivedMessage = "";
 			var client = new Paho.MQTT.Client(hostname, port, clientid); // MQTT client object
 
 			var options = { 
@@ -37,7 +55,8 @@
 			 
 			     //Gets Called if the connection has successfully been established
 			     onSuccess: function () {
-			         client.subscribe("cs8674/InstallStatus", {qos: 0}); // Subscribe to the 'cs8674/InstallStatus' topic
+			         client.subscribe("cs8674/InstallStatus", {qos: 0}); // 'cs8674/InstallStatus' topic will receive diagnostic messages from the client
+			         client.subscribe("cs8674/ClientStatus", {qos: 0}); // 'cs8674/ClientStatus' topic will receive messages when the client becomes alive
 			     },
 			 
 			     //Gets Called if the connection could not be established
@@ -58,14 +77,28 @@
 			  }
 			}
 
-			function onMessageArrived(message) {
-			  var div = document.getElementById('message'); // Get the deployment status div by its ID
+			// This is executed when the user clicks the "Deploy" button next to the online client. It sends a message to the shell script to start the deployment process
+			var sendDeployMessage = function() {
+				var message = new Paho.MQTT.Message("Deploy-" + receivedMessage); // Construct the message to send to the shell script
+				message.destinationName = "cs8674/DeployApproved"; // Set the topic name: The shell script is subscribed to this topic
+				client.send(message); // Send the message
+			}
 
-			  if(message.payloadString === "Done!") {
-			  	div.innerHTML = div.innerHTML + message.payloadString; // If 'Done!' is receieved don't create a new line
-			  } else {
-			  	div.innerHTML = div.innerHTML + '<br />' + message.payloadString;
-			  }
+			function onMessageArrived(message) {
+				if(message.destinationName === "cs8674/InstallStatus") {
+					var div = document.getElementById('message'); // Get the deployment status div by its ID
+
+					if(message.payloadString === "Done!") {
+						div.innerHTML = div.innerHTML + message.payloadString; // If 'Done!' is received don't create a new line
+					} else {
+						div.innerHTML = div.innerHTML + '<br />' + message.payloadString;
+					}
+				} else if(message.destinationName === "cs8674/ClientStatus") { // Populate the "Online Clients" dialogue box
+					console.log(message.payloadString);
+					receivedMessage = message.payloadString; // message.payloadString will contain the IP address of the client
+					var clientStatusDiv = document.getElementById("clientsMessage");
+					clientStatusDiv.innerHTML = clientStatusDiv.innerHTML + '<br />' + '<img src="{% static "images/greenlight.png" %}" height="10" width="10" style="margin-right:2%">' + message.payloadString + '<button type="button" class="btn btn-primary btn-xs" style="margin-left:2%;" onclick="sendDeployMessage()">Deploy</button>' + '<br />';
+				}
 			}
 		</script>
 	<!--/div-->

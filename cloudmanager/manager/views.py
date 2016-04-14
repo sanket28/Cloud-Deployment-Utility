@@ -36,33 +36,25 @@ def status(request):
 		if os.path.isfile(save_path+"cloud_configuration.txt") == True: # If the file already exists, remove it
 			os.remove(save_path+"cloud_configuration.txt")
 
-		if os.path.isfile(save_path+"reboot.txt") == True: # If the file already exists, remove it
-			os.remove(save_path+"reboot.txt")
-
 		cloudConfigPath = os.path.join(save_path, "cloud_configuration.txt")
-		rebootConfigPath = os.path.join(save_path, "reboot.txt")
 
 		#print request.POST.get('hypervisorRadios')
 		print(cloudConfigPath)
-		print(rebootConfigPath)
 
 		file_object = open(cloudConfigPath, 'w') # Open the file for writing
-		file_object2 = open(rebootConfigPath, 'w')
 
 		hyperV = request.POST.get('hypervisorRadios') # Get the selected hypervisor
-		rebootStatus = request.POST.get('rebootRadios')
+		rebootStatus = request.POST.get('rebootRadios') # Get reboot option
 
 		print(rebootStatus)
 
 		if rebootStatus == "Yes":
 			print "YES"
-			file_object2.write("reboot_status=YES")
+			file_object.write("reboot_status=YES\n")
 
 		else:
 			print "NO"
-			file_object2.write("reboot_status=NO")
-
-		file_object2.close()
+			file_object.write("reboot_status=NO\n")
 		
 		# At the moment we only support KVM, KVM + Apache Cloudstack and XEN, so we only check for those configuraions
 		if hyperV == "KVM":
