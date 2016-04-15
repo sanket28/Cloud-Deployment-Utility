@@ -1,13 +1,25 @@
 #!/bin/bash
 
+#Global Variables 
+
 SSH_Password="cs8674-cloudmanager" # This is the SSH password for the management server
+
 MQTT_Client_Directory="/home/cloudmanager/mqttclient/" # Directory where the mqttclient executable exists
+
 Script_Directory="/home/cloudmanager/Cloud-Deployment-Utility/CS8674-Shell-Scripts/" # Directory where the script exists
+
 IP_Address=`ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{print $1}'` # Get the IP address of this client. This will work only when the eth0 interface exists. Other interfaces? Multiple NICs?
+
+
+XEN_HASH_ORIGINAL="ca65a79788e79166c52fff8edd26e34a4c2cd251c7810b7d43d46b9b48bcc33d"
+
+KVM_CLOUDSTACK_HASH_ORIGINAL="3b7524125ae3c1fc8c16f310c8c685f1e025d0f6bcda93fbe79f035dedc6f9bb"
+
 
 ${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/OnlineStatus" -m "$IP_Address"
 
 ${MQTT_Client_Directory}mqttcli sub --conf ${MQTT_Client_Directory}server.json -t "cs8674/DeployApproved" > ${MQTT_Client_Directory}approval.txt
+
 Approval=`tac ${MQTT_Client_Directory}approval.txt | egrep -m 1 .`
 
 
@@ -17,10 +29,12 @@ handle_error () {
     
 if [ $? != 0 ]
   then
-	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Some error occured. Please visit the syslog page on the web application for more details"
-	poweroff
+	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Some error occured. Please visit the syslog page on the web application for more details. Aborting installation......."
+	exit 1
 fi
 }
+
+
 
 if [ "$Approval" = 'Deploy-'${IP_Address} ]
 	then
@@ -29,6 +43,7 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 	# The Hypervisor variable will contain the selected cloud configuration fetched from the cloud_configuration.txt file 
 	# from the management server. Device_ID variable will contain the hard drive identifier ex. /dev/sda
 	# And Reboot_Status will determine whether the user wants to reboot this Debian Live OS after deployment
+
 	Hypervisor=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "cat /home/cloudmanager/cloud_configuration.txt" | grep hyp_name -m 1 | grep -Po 'hyp_name=\K[^:]+'`
 	Reboot_Status=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "cat /home/cloudmanager/cloud_configuration.txt" | grep reboot_status -m 1 | grep -Po 'reboot_status=\K[^:]+'`     
 	Device_ID=`fdisk -l | grep Disk -m 1 | grep -Po 'Disk \K[^:]+'`
@@ -37,8 +52,22 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: The device id selected by user is $Device_ID"
 		 
 	# Partition the disk according to value of Hypervisor
-	if [ "$Hypervisor" = 'XENSERVER' ]
+	if [ "$Hypervisor" = 'XENSERVER']
 		then
+
+		#First,fetch the sha256 hashes of cloned images from the management server. Then ,Verify the integrity of the clone images. Abort if integrity check fails. 		
+		XEN_HASH_FETCHED=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "sha256sum /home/cloudmanager/xen.iso" | cut -d ' ' -f1`
+		
+		if [ $XEN_HASH_ORIGINAL = "$XEN_HASH_FETCHED" ]
+			then 
+			:
+		else 
+		
+		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: $Hypervisor The integrity of the installation image cloud not be verfied. 			Aborting installation......................."
+		exit 1 
+
+		fi
+		
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Creating partitions with fdisk... "
 
 		# This creates a new GPT partition table and creates 3 partitions
@@ -80,8 +109,23 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 
 
-	elif [ "$Hypervisor" = 'KVM' ] || [ "$Hypervisor" = 'KVM-CLOUDSTACK' ] 
+	elif [[ "$Hypervisor" = 'KVM' ] || [ "$Hypervisor" = 'KVM-CLOUDSTACK' ] 
 		then
+		
+		#Fetch the sha256 hashes of cloned images from the management server. Then ,Verify the integrity of the clone images. Abort if integrity check fails. 
+		KVM_CLOUDSTACK_HASH_FETCHED=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "sha256sum /home/cloudmanager/ubuntu-kvm-cloudstack.iso" | cut -d ' ' -f1`
+
+		if [ $KVM_CLOUDSTACK_HASH_ORIGINAL = "$KVM_CLOUDSTACK_HASH_FETCHED" ]
+			then 
+			:		
+		else 
+		
+		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: $Hypervisor The integrity of the installation image cloud not be verfied. 			Aborting installation......................."
+		
+		exit 1 
+
+		fi
+
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Creating partitions with fdisk...."	
 
 		# This creates a new DOS partition table and creates 1 partition of 6GB
