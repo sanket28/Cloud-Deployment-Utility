@@ -3,21 +3,17 @@
 #Global Variables 
 
 SSH_Password="cs8674-cloudmanager" # This is the SSH password for the management server
-
 MQTT_Client_Directory="/home/cloudmanager/mqttclient/" # Directory where the mqttclient executable exists
-
 Script_Directory="/home/cloudmanager/Cloud-Deployment-Utility/CS8674-Shell-Scripts/" # Directory where the script exists
-
 IP_Address=`ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{print $1}'` # Get the IP address of this client. This will work only when the eth0 interface exists. Other interfaces? Multiple NICs?
+Management_Server_IP="192.168.1.42"
 
 
 XEN_HASH_ORIGINAL="ca65a79788e79166c52fff8edd26e34a4c2cd251c7810b7d43d46b9b48bcc33d"
-
 KVM_CLOUDSTACK_HASH_ORIGINAL="3b7524125ae3c1fc8c16f310c8c685f1e025d0f6bcda93fbe79f035dedc6f9bb"
 
 
 ${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/OnlineStatus" -m "$IP_Address"
-
 ${MQTT_Client_Directory}mqttcli sub --conf ${MQTT_Client_Directory}server.json -t "cs8674/DeployApproved" > ${MQTT_Client_Directory}approval.txt
 
 Approval=`tac ${MQTT_Client_Directory}approval.txt | egrep -m 1 .`
@@ -27,9 +23,9 @@ Approval=`tac ${MQTT_Client_Directory}approval.txt | egrep -m 1 .`
 
 handle_error () {
     
-if [ $? != 0 ]
+if [ "$?" != "0" ]
   then
-	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Some error occured. Please visit the syslog page on the web application for more details. Aborting installation......."
+	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Some error occured. Aborting installation. Please SSH into the Debian Live system to debug. Logs can be found at /var/log/"
 	exit 1
 fi
 }
@@ -44,8 +40,8 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 	# from the management server. Device_ID variable will contain the hard drive identifier ex. /dev/sda
 	# And Reboot_Status will determine whether the user wants to reboot this Debian Live OS after deployment
 
-	Hypervisor=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "cat /home/cloudmanager/cloud_configuration.txt" | grep hyp_name -m 1 | grep -Po 'hyp_name=\K[^:]+'`
-	Reboot_Status=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "cat /home/cloudmanager/cloud_configuration.txt" | grep reboot_status -m 1 | grep -Po 'reboot_status=\K[^:]+'`     
+	Hypervisor=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "cat /home/cloudmanager/cloud_configuration.txt" | grep hyp_name -m 1 | grep -Po 'hyp_name=\K[^:]+'`
+	Reboot_Status=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "cat /home/cloudmanager/cloud_configuration.txt" | grep reboot_status -m 1 | grep -Po 'reboot_status=\K[^:]+'`     
 	Device_ID=`fdisk -l | grep Disk -m 1 | grep -Po 'Disk \K[^:]+'`
 
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: $Hypervisor hypervisor was selected by user"
@@ -57,14 +53,14 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Checking the integrity of $Hypervisor image........"
 
 		#First,fetch the sha256 hashes of cloned images from the management server. Then ,Verify the integrity of the clone images. Abort if integrity check fails. 		
-		XEN_HASH_FETCHED=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "sha256sum /home/cloudmanager/xen.iso" | cut -d ' ' -f1`
+		XEN_HASH_FETCHED=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "sha256sum /home/cloudmanager/xen.iso" | cut -d ' ' -f1`
 		handle_error
 		
 		if [ "$XEN_HASH_ORIGINAL" = "$XEN_HASH_FETCHED" ]
 			then 
 			:
 		else 
-		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: The integrity of the installation image cloud not be verfied. Aborting installation......................."
+		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: The integrity of the installation image cloud not be verfied. Aborting installation. You can login to the Debian system using SSH to debug. Logs can be found at /var/log/"
 		exit 1 
 		fi
 		
@@ -98,7 +94,7 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 		
 		# This fetches the XenServer cloned image using ssh from the management server and restores it to the 1st partition
 		# using dd
-		sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "dd if=/home/cloudmanager/xen.iso" | dd of=${Device_ID}1 bs=10M
+		sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "dd if=/home/cloudmanager/xen.iso" | dd of=${Device_ID}1 bs=10M
 		handle_error
 
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
@@ -133,7 +129,7 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 			then
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Fetching KVM clone...."
 
-			sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "dd if=/home/cloudmanager/ubuntu-kvm.iso" | dd of=${Device_ID}1 bs=10M
+			sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "dd if=/home/cloudmanager/ubuntu-kvm.iso" | dd of=${Device_ID}1 bs=10M
 			handle_error
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 
@@ -141,21 +137,21 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 			then
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Checking the integrity of $Hypervisor image........"
 			#Fetch the sha256 hashes of cloned images from the management server. Then ,Verify the integrity of the clone images. Abort if integrity check fails. 
-			KVM_CLOUDSTACK_HASH_FETCHED=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "sha256sum /home/cloudmanager/ubuntu-kvm-cloudstack.iso" | cut -d ' ' -f1`
+			KVM_CLOUDSTACK_HASH_FETCHED=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "sha256sum /home/cloudmanager/ubuntu-kvm-cloudstack.iso" | cut -d ' ' -f1`
 			handle_error
 
 			if [ "$KVM_CLOUDSTACK_HASH_ORIGINAL" = "$KVM_CLOUDSTACK_HASH_FETCHED" ]
 				then 
 				:		
 			else 
-			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: $Hypervisor The integrity of the installation image cloud not be verfied. Aborting installation......................."
+			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: $Hypervisor The integrity of the installation image cloud not be verfied. Aborting installation. You can login to the Debian system via SSH to debug. Logs can be found at /var/log/"
 			exit 1 
 			fi
 
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Fetching KVM-CLOUDSTACK clone...."
 
-			sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "dd if=/home/cloudmanager/ubuntu-kvm-cloudstack.iso" | dd of=${Device_ID}1 bs=10M
+			sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "dd if=/home/cloudmanager/ubuntu-kvm-cloudstack.iso" | dd of=${Device_ID}1 bs=10M
 			handle_error
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		fi
@@ -207,7 +203,7 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Installing the MBR....."	
 
 		# Install the MBR
-		sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "dd if=/home/cloudmanager/mbr.bin" | dd of=$Device_ID bs=446 count=1
+		sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "dd if=/home/cloudmanager/mbr.bin" | dd of=$Device_ID bs=446 count=1
 		handle_error
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Installing GRUB Bootloader....."	
@@ -227,7 +223,7 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Congrats ! The process was completed successfully."
 
 	# Store the syslog on the management server
-	cat /var/log/syslog | sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "cat > /home/cloudmanager/deployment_log/syslog-$IP_Address.txt"
+	cat /var/log/syslog | sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "cat > /home/cloudmanager/deployment_log/syslog-$IP_Address.txt"
 	handle_error
 	if [ "$Reboot_Status" = 'YES' ]
 		then
