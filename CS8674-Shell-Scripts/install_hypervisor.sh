@@ -52,7 +52,7 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: The device id selected by user is $Device_ID"
 		 
 	# Partition the disk according to value of Hypervisor
-	if [ "$Hypervisor" = 'XENSERVER']
+	if [ "$Hypervisor" = 'XENSERVER' ]
 		then
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Checking the integrity of $Hypervisor image........"
 
@@ -160,7 +160,6 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		fi
 
-		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!" 
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Paritioning disks with fdisk..."
 
 		# This deletes the 1st partition and creates a new one of 100GB
