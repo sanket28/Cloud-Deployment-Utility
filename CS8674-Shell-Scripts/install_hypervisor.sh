@@ -54,20 +54,21 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 	# Partition the disk according to value of Hypervisor
 	if [ "$Hypervisor" = 'XENSERVER']
 		then
+		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Checking the integrity of $Hypervisor image........"
 
 		#First,fetch the sha256 hashes of cloned images from the management server. Then ,Verify the integrity of the clone images. Abort if integrity check fails. 		
 		XEN_HASH_FETCHED=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "sha256sum /home/cloudmanager/xen.iso" | cut -d ' ' -f1`
+		handle_error
 		
 		if [ $XEN_HASH_ORIGINAL = "$XEN_HASH_FETCHED" ]
 			then 
 			:
 		else 
-		
-		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: $Hypervisor The integrity of the installation image cloud not be verfied. 			Aborting installation......................."
+		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: The integrity of the installation image cloud not be verfied. Aborting installation......................."
 		exit 1 
-
 		fi
 		
+		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!" 
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Creating partitions with fdisk... "
 
 		# This creates a new GPT partition table and creates 3 partitions
@@ -111,21 +112,6 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 
 	elif [[ "$Hypervisor" = 'KVM' ] || [ "$Hypervisor" = 'KVM-CLOUDSTACK' ] 
 		then
-		
-		#Fetch the sha256 hashes of cloned images from the management server. Then ,Verify the integrity of the clone images. Abort if integrity check fails. 
-		KVM_CLOUDSTACK_HASH_FETCHED=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "sha256sum /home/cloudmanager/ubuntu-kvm-cloudstack.iso" | cut -d ' ' -f1`
-
-		if [ $KVM_CLOUDSTACK_HASH_ORIGINAL = "$KVM_CLOUDSTACK_HASH_FETCHED" ]
-			then 
-			:		
-		else 
-		
-		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: $Hypervisor The integrity of the installation image cloud not be verfied. 			Aborting installation......................."
-		
-		exit 1 
-
-		fi
-
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Creating partitions with fdisk...."	
 
 		# This creates a new DOS partition table and creates 1 partition of 6GB
@@ -153,6 +139,20 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 
 		elif [ "$Hypervisor" = 'KVM-CLOUDSTACK' ]
 			then
+			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Checking the integrity of $Hypervisor image........"
+			#Fetch the sha256 hashes of cloned images from the management server. Then ,Verify the integrity of the clone images. Abort if integrity check fails. 
+			KVM_CLOUDSTACK_HASH_FETCHED=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "sha256sum /home/cloudmanager/ubuntu-kvm-cloudstack.iso" | cut -d ' ' -f1`
+			handle_error
+
+			if [ $KVM_CLOUDSTACK_HASH_ORIGINAL = "$KVM_CLOUDSTACK_HASH_FETCHED" ]
+				then 
+				:		
+			else 
+			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: $Hypervisor The integrity of the installation image cloud not be verfied. Aborting installation......................."
+			exit 1 
+			fi
+			
+			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Fetching KVM-CLOUDSTACK clone...."
 
 			sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "dd if=/home/cloudmanager/ubuntu-kvm-cloudstack.iso" | dd of=${Device_ID}1 bs=10M
