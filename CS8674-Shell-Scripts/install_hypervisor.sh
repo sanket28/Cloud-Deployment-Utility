@@ -60,7 +60,7 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 		XEN_HASH_FETCHED=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "sha256sum /home/cloudmanager/xen.iso" | cut -d ' ' -f1`
 		handle_error
 		
-		if [ $XEN_HASH_ORIGINAL = "$XEN_HASH_FETCHED" ]
+		if [ "$XEN_HASH_ORIGINAL" = "$XEN_HASH_FETCHED" ]
 			then 
 			:
 		else 
@@ -110,7 +110,7 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 
 
-	elif [[ "$Hypervisor" = 'KVM' ] || [ "$Hypervisor" = 'KVM-CLOUDSTACK' ] 
+	elif [ "$Hypervisor" = 'KVM' ] || [ "$Hypervisor" = 'KVM-CLOUDSTACK' ] 
 		then
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Creating partitions with fdisk...."	
 
@@ -144,14 +144,14 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 			KVM_CLOUDSTACK_HASH_FETCHED=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@192.168.1.42 "sha256sum /home/cloudmanager/ubuntu-kvm-cloudstack.iso" | cut -d ' ' -f1`
 			handle_error
 
-			if [ $KVM_CLOUDSTACK_HASH_ORIGINAL = "$KVM_CLOUDSTACK_HASH_FETCHED" ]
+			if [ "$KVM_CLOUDSTACK_HASH_ORIGINAL" = "$KVM_CLOUDSTACK_HASH_FETCHED" ]
 				then 
 				:		
 			else 
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: $Hypervisor The integrity of the installation image cloud not be verfied. Aborting installation......................."
 			exit 1 
 			fi
-			
+
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Fetching KVM-CLOUDSTACK clone...."
 
