@@ -6,7 +6,7 @@ SSH_Password="cs8674-cloudmanager" # This is the SSH password for the management
 MQTT_Client_Directory="/home/cloudmanager/mqttclient/" # Directory where the mqttclient executable exists
 Script_Directory="/home/cloudmanager/Cloud-Deployment-Utility/CS8674-Shell-Scripts/" # Directory where the script exists
 IP_Address=`ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{print $1}'` # Get the IP address of this client. This will work only when the eth0 interface exists. Other interfaces? Multiple NICs?
-Management_Server_IP="192.168.1.42"
+Management_Server_IP="192.168.1.42" # Management Server IP address or domain name
 
 
 XEN_HASH_ORIGINAL="ca65a79788e79166c52fff8edd26e34a4c2cd251c7810b7d43d46b9b48bcc33d"
@@ -21,13 +21,12 @@ Approval=`tac ${MQTT_Client_Directory}approval.txt | egrep -m 1 .`
 
 #Fuction to handle error and graceful exit 
 
-handle_error () {
-    
-if [ "$?" != "0" ]
-  then
-	${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Some error occured. Aborting installation. Please SSH into the Debian Live system to debug. Logs can be found at /var/log/"
-	exit 1
-fi
+handle_error () {   
+	if [ "$?" != "0" ]
+	  then
+		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Some error occured. Aborting installation. Please SSH into the Debian Live system to debug. Logs can be found at /var/log/"
+		exit 1
+	fi
 }
 
 
@@ -50,6 +49,9 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 	# Partition the disk according to value of Hypervisor
 	if [ "$Hypervisor" = 'XENSERVER' ]
 		then
+		sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "/home/cloudmanager/xen.iso" # Check if xen.iso exists on the management server
+		handle_error
+
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Checking the integrity of $Hypervisor image........"
 
 		#First,fetch the sha256 hashes of cloned images from the management server. Then ,Verify the integrity of the clone images. Abort if integrity check fails. 		
@@ -127,6 +129,9 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 		# restores them to the 1st partition using dd
 		if [ "$Hypervisor" = 'KVM' ]
 			then
+			sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "/home/cloudmanager/ubuntu-kvm.iso" # Check if ubuntu-kvm.iso exists on the management server
+			handle_error
+
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Fetching KVM clone...."
 
 			sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "dd if=/home/cloudmanager/ubuntu-kvm.iso" | dd of=${Device_ID}1 bs=10M
@@ -135,7 +140,11 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 
 		elif [ "$Hypervisor" = 'KVM-CLOUDSTACK' ]
 			then
+			sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "/home/cloudmanager/ubuntu-kvm-cloudstack.iso" # Check if ubuntu-kvm-cloudstack.iso exists on the management server
+			handle_error
+
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Checking the integrity of $Hypervisor image........"
+
 			#Fetch the sha256 hashes of cloned images from the management server. Then ,Verify the integrity of the clone images. Abort if integrity check fails. 
 			KVM_CLOUDSTACK_HASH_FETCHED=`sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "sha256sum /home/cloudmanager/ubuntu-kvm-cloudstack.iso" | cut -d ' ' -f1`
 			handle_error
@@ -202,6 +211,9 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Installing the MBR....."	
 
+		sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "/home/cloudmanager/mbr.bin" # Check if mbr.bin exists on the management server
+		handle_error
+		
 		# Install the MBR
 		sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "dd if=/home/cloudmanager/mbr.bin" | dd of=$Device_ID bs=446 count=1
 		handle_error
