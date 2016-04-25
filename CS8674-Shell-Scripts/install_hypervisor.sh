@@ -1,7 +1,6 @@
 #!/bin/bash
 
 #Global Variables 
-
 SSH_Password="cs8674-cloudmanager" # This is the SSH password for the management server
 MQTT_Client_Directory="/home/cloudmanager/mqttclient/" # Directory where the mqttclient executable exists
 Script_Directory="/home/cloudmanager/Cloud-Deployment-Utility/CS8674-Shell-Scripts/" # Directory where the script exists
@@ -20,7 +19,6 @@ Approval=`tac ${MQTT_Client_Directory}approval.txt | egrep -m 1 .`
 
 
 #Fuction to handle error and graceful exit 
-
 handle_error () {   
 	if [ "$?" != "0" ]
 	  then
@@ -49,9 +47,6 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 	# Partition the disk according to value of Hypervisor
 	if [ "$Hypervisor" = 'XENSERVER' ]
 		then
-		sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "/home/cloudmanager/xen.iso" # Check if xen.iso exists on the management server
-		handle_error
-
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Checking the integrity of $Hypervisor image........"
 
 		#First,fetch the sha256 hashes of cloned images from the management server. Then ,Verify the integrity of the clone images. Abort if integrity check fails. 		
@@ -129,9 +124,6 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 		# restores them to the 1st partition using dd
 		if [ "$Hypervisor" = 'KVM' ]
 			then
-			sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "/home/cloudmanager/ubuntu-kvm.iso" # Check if ubuntu-kvm.iso exists on the management server
-			handle_error
-
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Fetching KVM clone...."
 
 			sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "dd if=/home/cloudmanager/ubuntu-kvm.iso" | dd of=${Device_ID}1 bs=10M
@@ -140,9 +132,6 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 
 		elif [ "$Hypervisor" = 'KVM-CLOUDSTACK' ]
 			then
-			sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "/home/cloudmanager/ubuntu-kvm-cloudstack.iso" # Check if ubuntu-kvm-cloudstack.iso exists on the management server
-			handle_error
-
 			${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Checking the integrity of $Hypervisor image........"
 
 			#Fetch the sha256 hashes of cloned images from the management server. Then ,Verify the integrity of the clone images. Abort if integrity check fails. 
@@ -211,8 +200,6 @@ if [ "$Approval" = 'Deploy-'${IP_Address} ]
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "Done!"
 		${MQTT_Client_Directory}mqttcli pub --conf ${MQTT_Client_Directory}server.json -t "cs8674/InstallStatus" -m "$IP_Address: Installing the MBR....."	
 
-		sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "/home/cloudmanager/mbr.bin" # Check if mbr.bin exists on the management server
-		handle_error
 		
 		# Install the MBR
 		sshpass -p $SSH_Password ssh -o StrictHostKeyChecking=no cloudmanager@${Management_Server_IP} "dd if=/home/cloudmanager/mbr.bin" | dd of=$Device_ID bs=446 count=1
